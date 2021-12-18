@@ -1,39 +1,38 @@
 #include <iostream>
 
 class Monitor {
-    bool pixels[80][50];
+    static const int width = 80;
+    static const int height = 50;
+    bool pixels[width][height];
 public:
 
-    static void init(Monitor* monitor){
-        for (int i = 0; i < 80; i++){
-            for (int j = 0; j < 50; j++) {
-                monitor->pixels[i][j] = 0;
+    void init(){
+        for (int i = 0; i < width; i++){
+            for (int j = 0; j < height; j++) {
+                pixels[i][j] = 0;
             }
         }
     }
 
-    static void display(Monitor* monitor){
-        for (int i = 0; i < 80; i++){
-            for (int j = 0; j < 50; j++){
-                std::cout << monitor->pixels[i][j];
+    void display(){
+        for (int i = 0; i < width; i++){
+            for (int j = 0; j < height; j++){
+                std::cout << pixels[i][j];
             }
             std::cout << std::endl;
         }
     }
 
-    static void paint (Monitor* monitor, int begin_x, int begin_y, int end_x, int end_y){
+    void paint (int begin_x, int begin_y, int end_x, int end_y){
         for (int i =begin_x; i < end_x; i++){
             for (int j = begin_y; j < end_y; j++) {
-                monitor->pixels[i][j] = 1;
+               pixels[i][j] = 1;
             }
         }
     }
 
-    friend class Window;
+    //friend class Window;
 };
-
-
-
 
 class Window{
     int begin_x = 0;
@@ -58,28 +57,29 @@ public:
         return weight;
     }
 
-    friend void move(Window* window, int shift_x, int shift_y);
-    friend void resize(Window* window, int newHeight, int newWeight);
-    friend class Monitor;
+    void move( int shift_x, int shift_y){
+        begin_x = begin_x + shift_x;
+        begin_y = begin_y + shift_y;
+        if (begin_x < 0) begin_x = 0;
+        if (begin_x + weight > 80) begin_x = 80 - weight;
+        if (begin_y < 0) begin_y = 0;
+        if (begin_y + height > 50) begin_y = 50 - height;
+    }
+
+    void resize(int newHeight, int newWeight){
+        height = newHeight;
+        weight = newWeight;
+        if (height < 0) height = 0;
+        if (begin_x + weight > 80) weight = 80 - begin_x;
+        if (weight < 0) weight = 0;
+        if (begin_y + height > 80) height = 80 - begin_y;
+    }
+
+
+
+   //friend class Monitor;
 
 };
-void move(Window* window, int shift_x, int shift_y){
-    window->begin_x = window->begin_x + shift_x;
-    window->begin_y = window->begin_y + shift_y;
-    if (window->begin_x < 0) window->begin_x = 0;
-    if (window->begin_x + window->weight > 80) window->begin_x = 80 - window->weight;
-    if (window->begin_y < 0) window->begin_y = 0;
-    if (window->begin_y + window->height > 50) window->begin_y = 50 - window->height;
-}
-
-void resize(Window* window, int newHeight, int newWeight){
-    window->height = newHeight;
-    window->weight = newWeight;
-    if (window->height < 0) window->height = 0;
-    if (window->begin_x + window->weight > 80) window->weight = 80 - window->begin_x;
-    if (window->weight < 0) window->weight = 0;
-    if (window->begin_y + window->height > 80) window->height = 80 - window->begin_y;
-}
 
 
 int main() {
@@ -92,25 +92,26 @@ int main() {
         if (cmd == "move") {
             std::cout << "enter new vector: ";
             std::cin >> parameter >> parameter_2;
-            Monitor::init(monitor);
-            move(window, parameter, parameter_2);
-            Monitor::paint(monitor, window->getBegin_x(), window->getBegin_y(), window->getBegin_x() + window->getWeight(), window->getBegin_y() + window->getHeight());
+            monitor->init();
+            window->move(parameter, parameter_2);
+            monitor->paint(window->getBegin_x(), window->getBegin_y(), window->getBegin_x() + window->getWeight(), window->getBegin_y() + window->getHeight());
         }else if (cmd == "resize") {
             std::cout << "enter new size: ";
             std::cin >> parameter >> parameter_2;
-            Monitor::init(monitor);
-            resize(window, parameter, parameter_2);
-            Monitor::paint(monitor, window->getBegin_x(), window->getBegin_y(), window->getBegin_x() + window->getWeight(), window->getBegin_y() + window->getHeight());
+            monitor->init();
+            window->resize(parameter, parameter_2);
+            monitor->paint(window->getBegin_x(), window->getBegin_y(), window->getBegin_x() + window->getWeight(), window->getBegin_y() + window->getHeight());
         }else if (cmd == "display") {
-            Monitor::display(monitor);
+            monitor->display();
         }else if (cmd == "close") {
-            Monitor::init(monitor);
-            return 0;
+            monitor->init();
+            break;
         }
         else std::cerr << "Invalid command!"; 
     }
 
+    delete window;
+    delete monitor;
 
-    std::cout << "Hello, World!" << std::endl;
     return 0;
 }
